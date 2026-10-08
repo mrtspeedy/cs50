@@ -1,2 +1,3 @@
-# cs50
+# CS50 Final Project
+
 CS50 Final Project Repo

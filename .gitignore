@@ -1,0 +1,9 @@
+VSCode Plugin Files
+.vscode
+
+Environment Variables
+/src/.env
+
+Runtime Folders
+/src/instance
+/src/__pycache__
