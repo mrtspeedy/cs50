@@ -5,5 +5,37 @@
 {% endblock %}
 
 {% block main %}
-    
+    <div class="left">
+        <label for="currency">Currency:</label>
+        <select id="currency">
+            <option value="GBP">£ GBP</option>
+            <option value="USD">$ USD</option>
+            <option value="EUR">€ EUR</option>
+        </select>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Amount</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Time (UTC)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if expenses %}
+                {% for expense in expenses %}
+                    <tr>
+                        <!-- Formats the amounts as a currency -->
+                        <td><span class="currency-symbol">£</span>{{ "%.2f" | format(expense.amount) }}</td>
+                        <td>{{ expense.category }}</td>
+                        <td>{{ expense.desc }}</td>
+                        <td>{{ expense.time | datetimefmt }}</td>
+                        <!-- TODO ALLOW EDIT FROM HERE -->
+                    </tr>
+                {% endfor %}
+            {% endif %}
+        </tbody>
+    </table>
 {% endblock %}

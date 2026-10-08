@@ -2,6 +2,7 @@ import os
 from flask import Flask, redirect, render_template, request, session
 from sqlalchemy import func
 from werkzeug.security import check_password_hash, generate_password_hash
+from datetime import datetime
 from database import db, Users, Expenses
 from dotenv import load_dotenv
 from helpers import login_required
@@ -29,7 +30,10 @@ with app.app_context():
 @app.route("/")
 @login_required
 def index():
-    return render_template("index.html")
+
+    user = db.session.get(Users, session["user_id"])
+
+    return render_template("index.html", expenses=user.expenses)
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -113,4 +117,61 @@ def logout():
 
     # Redirect user to login
     return redirect("/login")
+
+@app.route("/add", methods=["POST", "GET"])
+@login_required
+def add():
+
+    if request.method == "POST":
+        # Store fields from form
+        amount = request.form.get("amount")
+        category = request.form.get("category")
+        desc = request.form.get("desc")
+
+        # Check all required fields are populated
+        if not amount or not category:
+            return "Missing Required Input(s)", 400
+
+        # Convert amount to a float with 2 decimal points
+        try:
+            amount = round(float(amount), 2)
+        except ValueError:
+            return "Amount must be a number", 400
+
+        # Check whether the number entered is a valid positive numeric number
+        if amount <= 0:
+            return "Amount must be positive", 400
+
+        # Populate values into database, desc or None means that if the value is null, then don't put anything there
+        expense = Expenses(user_id=session["user_id"], amount=amount, category=category, desc=desc or None)
+        db.session.add(expense)
+        db.session.commit()
+
+        return redirect("/")
+
+    else:
+        return render_template("add.html")
+
+@app.route("/edit", methods=["POST", "GET"])
+@login_required
+def edit():
+
+    # TODO
+    if request.method == "POST":
+        render_template("edit.html")
+
+    else:
+        return render_template("edit.html")
+    
+@app.route("/credits")
+def credits():
+
+    return render_template("credits.html")
+
+# To change the date and times to human readable time, with help of AI
+@app.template_filter("datetimefmt")
+def datetimefmt(value, fmt="%d %b %Y, %H:%M"):
+    if value is None:
+        return ""
+    return value.strftime(fmt)
 
