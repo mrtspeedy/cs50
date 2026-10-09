@@ -5,7 +5,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime, timezone
 from database import db, Users, Expenses
 from dotenv import load_dotenv
-from helpers import login_required, datetimefmt
+import math
+from helpers import login_required, datetimefmt, convert, CURRENCIES, loan_cost
 
 # Load .env file
 load_dotenv()
@@ -238,6 +239,214 @@ def remove(expense_id):
         return redirect("/")
 
     return render_template("remove.html", expenses=expenses, expense=expense)
+
+@app.route("/insights")
+@login_required
+def insights():
+
+    # Get all of the expenses from the current logged in user, group by category, and order by most amount spent on a category first
+    rows = db.session.execute(
+        db.select(
+            Expenses.category,
+            func.sum(Expenses.amount).label("total"),
+            func.count(Expenses.id).label("count"),
+        )
+        .where(Expenses.user_id == session["user_id"])
+        .group_by(Expenses.category)
+        .order_by(func.sum(Expenses.amount).desc())
+    ).all()
+
+    grand_total = sum(float(total) for _, total, _ in rows)
+
+    # Put all expenses per category and their total and percentage into a list of dictionaries
+    categories = [
+        {
+            "name": category,
+            "total": total,
+            "count": count,
+            "percentage": float(total) / grand_total * 100 if grand_total else 0
+        }
+        for category, total, count in rows
+    ]
+
+    return render_template("insights.html", categories=categories, grand_total=grand_total)
+
+# Manage account, such as changing your password or deleting your account
+@app.route("/manage", methods=["GET", "POST"])
+@login_required
+def manage():
+
+    # Get user info from database
+    user = db.session.get(Users, session["user_id"])
+
+    # If user got here by clicking any of the actions
+    if request.method == "POST":
+        action = request.form.get("action")
+
+        # If user wants to change their password, get form information about password
+        if action == "password":
+            current = request.form.get("current")
+            new = request.form.get("new")
+            confirmation = request.form.get("confirmation")
+
+            # If any inputs aren't given
+            if not current or not new or not confirmation:
+                return "Missing Required Input(s)", 400
+
+            # If new passwords do not match
+            if new != confirmation:
+                return "Passwords Do Not Match", 400
+
+            # If old password doesn't match the stored one
+            if not check_password_hash(user.hash, current):
+                return "Incorrect Current Password", 403
+
+            # Make sure the new password isn't equal to the old one
+            if check_password_hash(user.hash, new):
+                return "New Password Must Be Different", 400
+
+            # Generate a new password hash to store and store it in the database
+            user.hash = generate_password_hash(new)
+            db.session.commit()
+            return redirect("/manage")
+
+        # Otherwise if the user selected to delete their account, get the password to confirm deletion
+        elif action == "delete":
+            password = request.form.get("password")
+
+            # If the password is missing missing
+            if not password:
+                return "Missing Required Input(s)", 400
+
+            # Or if the password does not match the stored one
+            if not check_password_hash(user.hash, password):
+                return "Incorrect Password", 403
+
+            # If all is well, delete the user from the database, clear their session in the browser and redirect them to register a new account
+            db.session.delete(user)
+            db.session.commit()
+            session.clear()
+            return redirect("/register")
+
+        # If action doesn't match any of the above, then return invalid action
+        return "Invalid Action", 400
+
+    # If no action is given, pass None to show menu to select an action
+    action = request.args.get("action")
+    if action not in ("password", "delete"):
+        action = None
+
+    # Render the manage account page based on the action selected
+    return render_template("manage.html", action=action)
+
+@app.route("/converter", methods=["GET", "POST"])
+@login_required
+def converter():
+
+    if request.method == "POST":
+        # Get all form fields from the page
+        amount = request.form.get("amount")
+        base = request.form.get("base")
+        target = request.form.get("target")
+
+        # If any inputs are missing
+        if not amount or not base or not target:
+            return "Missing Required Input(s)", 400
+
+        # Only accept currencies that have been listed
+        if base not in CURRENCIES or target not in CURRENCIES:
+            return "Unsupported Currency", 400
+
+        # Try to round the amount, and if it throws an error then it's not a number
+        try:
+            amount = round(float(amount), 2)
+        except ValueError:
+            return "Amount must be a number", 400
+
+        # Make sure value is positive
+        if amount <= 0:
+            return "Amount must be a positive number", 400
+
+        # Convert the currencies, and if it doesn't return anything, return an error
+        conversion = convert(amount, base, target)
+        if conversion is None:
+            return "Exchange rates are unavailable right now, please try again", 502
+
+        # Send all fields to page to display the conversion
+        return render_template(
+            "converter.html",
+            currencies=CURRENCIES,
+            conversion=conversion,
+            amount=amount,
+            base=base,
+            target=target,
+        )
+
+    # Makes sure the currencies shown are only the ones we have listed
+    # Makes sure not to show any conversions since none have been selected
+    # The default pre-populated values for the base and target when first reaching the page
+    return render_template(
+        "converter.html",
+        currencies=CURRENCIES,
+        conversion=None,
+        base="GBP",
+        target="USD",
+    )
+
+@app.route("/calculator", methods=["GET", "POST"])
+@login_required
+def calculator():
+
+    if request.method == "POST":
+        # Get field inputs from page
+        principal = request.form.get("principal")
+        rate = request.form.get("rate")
+        term = request.form.get("term")
+        unit = request.form.get("unit")
+
+        if not principal or not rate or not term or not unit:
+            return "Missing Required Input(s)", 400
+
+        # If unit is not months or years
+        if unit not in ("years", "months"):
+            return "Invalid Term Unit", 400
+
+        # princial is the amount to be paid
+        # rate is the interest rate
+        # term is how long, in years or months, that loan will be paid by
+        try:
+            principal = round(float(principal), 2)
+            rate = float(rate)
+            term = int(term)
+        except ValueError:
+            return "Amount, rate and term must be numbers", 400
+
+        # Check if all inputs are valid numbers
+        if not math.isfinite(principal) or principal <= 0:
+            return "Amount must be a positive number", 400
+
+        if not math.isfinite(rate) or rate < 0 or rate > 100:
+            return "Rate must be between 0 and 100", 400
+
+        months = term * 12 if unit == "years" else term
+        if months < 1 or months > 600:
+            return "Term must be between 1 month and 50 years", 400
+
+        # Calculate the loan cost from helpers.py
+        result = loan_cost(principal, rate, months)
+
+        # Return all the loan values to the page
+        return render_template(
+            "calculator.html",
+            result=result,
+            principal=principal,
+            rate=rate,
+            term=term,
+            unit=unit,
+        )
+
+    # If the user has just gotten here via GET method, show nothing except the form
+    return render_template("calculator.html", result=None, principal=None, rate=None, term=None, unit="years")
     
 @app.route("/credits")
 def credits():

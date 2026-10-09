@@ -1,1 +1,51 @@
-<!-- Implement Currency Converter -->
+{% extends "layout.html" %}
+
+{% block title %}
+    Currency Converter
+{% endblock %}
+
+{% block main %}
+
+    <h2 class="mb-3">Currency Converter</h2>
+
+    <form method="post">
+        <div class="mb-3">
+            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="amount" placeholder="Amount" type="number" step="0.01" min="0.01" value="{{ '%.2f' | format(amount) if amount is defined else '' }}" required>
+        </div>
+
+        <div class="mb-3">
+            <select aria-label="Convert from" class="form-select mx-auto w-auto" name="base" required>
+                {% for code, symbol in currencies.items() %}
+                    <option value="{{ code }}" {{ 'selected' if code == base }}>From: {{ symbol }} {{ code }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <select aria-label="Convert to" class="form-select mx-auto w-auto" name="target" required>
+                {% for code, symbol in currencies.items() %}
+                    <option value="{{ code }}" {{ 'selected' if code == target }}>To: {{ symbol }} {{ code }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Convert</button>
+    </form>
+
+    <!-- If a valid conversion has been selected, show it below the inputs -->
+    {% if conversion %}
+        <div class="mt-4">
+            <p>
+                {{ currencies[base] }}{{ '%.2f' | format(amount) }} {{ base }} =
+                <strong>{{ currencies[target] }}{{ '%.2f' | format(conversion.result) }} {{ target }}</strong>
+            </p>
+            <p>
+                <small class="text-muted">
+                    Rate: 1 {{ base }} = {{ conversion.rate }} {{ target }}
+                    {% if conversion.date %}(ECB rate from {{ conversion.date }}){% endif %}
+                </small>
+            </p>
+        </div>
+    {% endif %}
+
+{% endblock %}

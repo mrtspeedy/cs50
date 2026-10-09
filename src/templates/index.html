@@ -5,6 +5,7 @@
 {% endblock %}
 
 {% block main %}
+<h2>Dashboard</h2>
     <div class="left">
         <label for="currency">Currency:</label>
         <select id="currency">
@@ -14,14 +15,14 @@
         </select>
     </div>
 
-    <table class="table">
+    <table class="table" id="expense-table">
         <thead>
             <tr>
-                <th>Amount</th>
-                <th>Category</th>
-                <th>Description</th>
-                <th>Time (UTC)</th>
-                <th></th>
+                <!-- Define headers to be sortable -->
+                <th class="sortable" data-sort="amount" data-type="number">Amount <span class="sort-arrow"></span></th>
+                <th class="sortable" data-sort="category" data-type="text">Category <span class="sort-arrow"></span></th>
+                <th class="sortable" data-sort="desc" data-type="text">Description <span class="sort-arrow"></span></th>
+                <th class="sortable" data-sort="time" data-type="text">Time (UTC) <span class="sort-arrow"></span></th>
                 <th></th>
             </tr>
         </thead>
@@ -30,10 +31,11 @@
                 {% for expense in expenses %}
                     <tr>
                         <!-- Formats the amounts as a currency -->
-                        <td><span class="currency-symbol">£</span>{{ "%.2f" | format(expense.amount) }}</td>
-                        <td>{{ expense.category }}</td>
-                        <td>{{ expense.desc }}</td>
-                        <td>{{ expense.time | datetimefmt }}</td>
+                        <!-- Store data values so that the table can be sorted by each value -->
+                        <td data-value="{{ '%.2f' | format(expense.amount) }}"><span class="currency-symbol">£</span>{{ "%.2f" | format(expense.amount) }}</td>
+                        <td data-value="{{ expense.category }}">{{ expense.category }}</td>
+                        <td data-value="{{ expense.desc or '' }}">{{ expense.desc or '' }}</td>
+                        <td data-value="{{ expense.time.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ expense.time | datetimefmt }}</td>
                         <!-- Send to edit page of the expense -->
                         <td>
                             <a class="btn btn-primary btn-sm" href="{{ url_for('edit', expense_id=expense.id) }}">Edit</a>

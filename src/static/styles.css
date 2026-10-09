@@ -7,10 +7,16 @@
     text-align: center;
 }
 
+/* Set the font for all text */
 text {
     font-family: Inter;
 }
 
 .left {
     text-align: left;
+}
+
+.sortable {
+    cursor: pointer;
+    user-select: none;
 }

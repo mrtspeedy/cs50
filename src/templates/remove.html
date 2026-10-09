@@ -5,12 +5,13 @@
 {% endblock %}
 
 {% block main %}
+    <h2>Remove</h2>
+
     {% if expenses %}
-        <label for="picker">Expense:</label>
         <!-- Check for changes in the select menu, and redirect to edit currently selected expense -->
-        <select class="mb-3" id="picker" onchange="if (this.value) window.location.href = this.value">
-            <option value="" {{ 'selected' if not expense }}>Select a transaction</option>
-            <!-- For every transaction that exists for the current user, create an option in the select menu -->
+        <select class="mb-3 form-control mx-auto w-auto" id="picker" onchange="if (this.value) window.location.href = this.value">
+            <option value="" {{ 'selected' if not expense }}>Select an Expense</option>
+            <!-- For every expense that exists for the current user, create an option in the select menu -->
             {% for e in expenses %}
                 <option value="{{ url_for('remove', expense_id=e.id) }}"
                         {{ 'selected' if expense and expense.id == e.id }}>
@@ -23,7 +24,7 @@
     {% endif %}
 
     {% if expense %}
-    <p>Are you sure you want to remove this transaction?</p>
+    <p>Are you sure you want to remove this expense?</p>
     <table class="table">
         <tr><th>Amount</th><td>{{ '%.2f' | format(expense.amount) }}</td></tr>
         <tr><th>Category</th><td>{{ expense.category }}</td></tr>

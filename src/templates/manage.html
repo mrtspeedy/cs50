@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Manage Account
+{% endblock %}
+
+{% block main %}
+
+<h2>Manage Account</h2>
+
+{% if action == "password" %}
+    <h3>Change Password</h3>
+    <form method="post">
+        <input type="hidden" name="action" value="password">
+        <div class="mb-3">
+            <input id="current" name="current" class="form-control mx-auto w-auto" type="password" autocomplete="off" placeholder="Current Password" required>
+        </div>
+        <div class="mb-3">
+            <input id="new" name="new" class="form-control mx-auto w-auto" type="password" autocomplete="off" placeholder="New Password" required>
+        </div>
+        <div class="mb-3">
+            <input id="confirmation" name="confirmation" class="form-control mx-auto w-auto" type="password" autocomplete="off" placeholder="Confirm Password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Change Password</button>
+    </form>
+
+{% elif action == "delete" %}
+    <h3>Delete Account</h3>
+    <p>This action permanently deletes all info associated with your account and cannot be reversed. Enter your password to confirm this action.</p>
+    <form method="post">
+        <input type="hidden" name="action" value="delete">
+        <div class="mb-3">
+            <input id="password" name="password" class="form-control mx-auto w-auto" type="password" autocomplete="off" placeholder="Password" required>
+        </div>
+        <button type="submit" class="btn btn-danger">Delete Account</button>
+    </form>
+
+<!-- If user hasn't selected any option and is getting to this page for the first time, give them the below options. -->
+{% else %}
+    <p>Select an action below.</p>
+    <a class="btn btn-primary" href="{{ url_for('manage', action='password') }}">Change Password</a>
+    <a class="btn btn-danger" href="{{ url_for('manage', action='delete') }}">Delete Account</a>
+{% endif %}
+
+{% endblock %}

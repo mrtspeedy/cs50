@@ -16,6 +16,7 @@
 
         <link href="/static/styles.css" rel="stylesheet">
         <script src="/static/main.js"></script>
+        <script src="/static/sort.js"></script>
 
         <title>Speedy's Expenses: {% block title %}{% endblock %}</title>
 
@@ -25,7 +26,7 @@
 
         <nav class="bg-light border navbar navbar-expand-md navbar-light">
             <div class="container-fluid">
-                <a class="navbar-brand" href="/"><span>Speedy's</span> <span>Budget</span></a>
+                <a class="navbar-brand" href="/"><span>Expenses</span></a>
                 <button aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation" class="navbar-toggler" data-bs-target="#navbar" data-bs-toggle="collapse" type="button">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -35,7 +36,9 @@
                             <li class="nav-item"><a class="nav-link" href="/add">Add</a></li>
                             <li class="nav-item"><a class="nav-link" href="/edit">Edit</a></li>
                             <li class="nav-item"><a class="nav-link" href="/remove">Remove</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/history">History</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/insights">Insights</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/converter">Converter</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/calculator">Calculator</a></li>
                         </ul>
                         <ul class="navbar-nav ms-auto mt-2">
                             <li class="nav-item"><a class="nav-link" href="/credits">Credits</a></li>

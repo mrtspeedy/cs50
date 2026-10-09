@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Insights
+{% endblock %}
+
+{% block main %}
+
+<h2>Spending by Category</h2>
+
+{% if categories %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Expenses</th>
+                <th>Total</th>
+                <th>Share</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- For every category that has been defined by the user -->
+            {% for c in categories %}
+            <tr>
+                <td>{{ c.name }}</td>
+                <td>{{ c.count }}</td>
+                <td><span class="currency-symbol">£</span>{{ "%.2f" | format(c.total) }}</td>
+                <td>
+                    <progress value="{{ '%.1f' | format(c.percentage) }}" max="100"></progress>
+                    {{ '%.1f' | format(c.percentage) }}%
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <!-- Section for total amount of categories and total spent -->
+                <th>Total</th>
+                <th>{{ categories | sum(attribute='count') }}</th>
+                <th><span class="currency-symbol">£</span>{{ "%.2f" | format(grand_total) }}</th>
+                <th></th>
+            </tr>
+        </tfoot>
+    </table>
+{% else %}
+    <p>No transactions found. Did you want to <a href="/add">add one</a>?</p>
+{% endif %}
+
+{% endblock %}

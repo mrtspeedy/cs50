@@ -1,5 +1,4 @@
-SQLAlchemy
-Flask-SQLAlchemy
+Flask-SQLAlchemy>=3.0
 Flask
-dotenv
-werkzeug
+python-dotenv
+requests

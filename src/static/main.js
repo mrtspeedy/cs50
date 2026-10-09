@@ -11,15 +11,30 @@ document.addEventListener('DOMContentLoaded', function(){
     // Set currencySelect to currency select menu
     const currencySelect = document.querySelector("#currency");
 
-    // Add listener on currency select menu
-    currencySelect.addEventListener("change", function(){
+    // Change all symbols on a page, if the symbol exists
+    function applySymbol(code){
+        const symbol = symbols[code];
+        if (!symbol) return;
 
-        // Set the symbol to the value it was changed to
-        const symbol = symbols[this.value];
-
-        // Go through entire page and change all currency symbols to the one there is now
-        document.querySelectorAll(".currency-symbol").forEach(function(element){
+        // For every element of type currency symbol
+        document.querySelectorAll(".currency-symbol").forEach(function (element){
             element.textContent = symbol;
         });
+    }
+
+    // Save the currency symbol choice on the users local storage
+    const saved = localStorage.getItem("currency");
+    if (saved && symbols[saved]){
+        applySymbol(saved);
+        // Only set the currency selected to saved IF the select menu exists
+        if (currencySelect){
+            currencySelect.value = saved;
+        }
+    }
+
+    // Add listener on currency select menu, and change the symbol in the local storage and apply it
+    currencySelect.addEventListener("change", function(){
+        localStorage.setItem("currency", this.value);
+        applySymbol(this.value);
     });
 });

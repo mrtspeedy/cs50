@@ -1,1 +1,61 @@
-<!-- Implement Loan Calculator -->
+{% extends "layout.html" %}
+
+{% block title %}
+    Loan Calculator
+{% endblock %}
+
+{% block main %}
+
+    <h2 class="mb-3">Loan Calculator</h2>
+
+    <form method="post">
+        <div class="mb-3">
+            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="principal" placeholder="Loan Amount" type="number" step="0.01" min="0.01" value="{{ '%.2f' | format(principal) if principal is not none else '' }}" required>
+        </div>
+
+        <div class="mb-3">
+            <input autocomplete="off" class="form-control mx-auto w-auto" name="rate" placeholder="Yearly Interest Rate (%)" type="number" step="0.01" min="0" value="{{ rate if rate is not none else '' }}" required>
+        </div>
+
+        <div class="mb-3">
+            <input autocomplete="off" class="form-control mx-auto w-auto" name="term" placeholder="Term" type="number" step="1" min="1" value="{{ term if term is not none else '' }}" required>
+        </div>
+
+        <div class="mb-3">
+            <select aria-label="Term Unit" class="form-select mx-auto w-auto" name="unit" required>
+                <option value="years" {{ 'selected' if unit == 'years' }}>Years</option>
+                <option value="months" {{ 'selected' if unit == 'months' }}>Months</option>
+            </select>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Calculate</button>
+    </form>
+
+<!-- If the result has been calculated server side (from the form) -->
+{% if result %}
+
+    <table class="table mt-4 mx-auto w-auto">
+        <tr>
+            <th>Monthly Payment:</th>
+            <td><span class="currency-symbol">£</span>{{ '%.2f' | format(result.payment) }}</td>
+        </tr>
+        <tr>
+            <th>Number of Payments:</th>
+            <td>{{ result.months }}</td>
+        </tr>
+        <tr>
+            <th>Amount Borrowed:</th>
+            <td><span class="currency-symbol">£</span>{{ '%.2f' | format(principal) }}</td>
+        </tr>
+        <tr>
+            <th>Total Interest:</th>
+            <td><span class="currency-symbol">£</span>{{ '%.2f' | format(result.interest) }}</td>
+        </tr>
+        <tr>
+            <th>Total Repaid:</th>
+            <td><strong><span class="currency-symbol">£</span>{{ '%.2f' | format(result.total) }}</strong></td>
+        </tr>
+    </table>
+{% endif %}
+
+{% endblock %}
