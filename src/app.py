@@ -2,16 +2,19 @@ import os
 from flask import Flask, redirect, render_template, request, session
 from sqlalchemy import func
 from werkzeug.security import check_password_hash, generate_password_hash
-from datetime import datetime
+from datetime import datetime, timezone
 from database import db, Users, Expenses
 from dotenv import load_dotenv
-from helpers import login_required
+from helpers import login_required, datetimefmt
 
 # Load .env file
 load_dotenv()
 
 # Configure application
 app = Flask(__name__)
+
+# Register Jinja filters
+app.add_template_filter(datetimefmt, "datetimefmt")
 
 # Get secret key from environment variables file
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
@@ -152,26 +155,91 @@ def add():
     else:
         return render_template("add.html")
 
-@app.route("/edit", methods=["POST", "GET"])
+# Define which expense id to edit, or instead get a selection of expenses that can be edited
+@app.route("/edit", defaults={"expense_id": None})
+@app.route("/edit/<int:expense_id>", methods=["POST", "GET"])
 @login_required
-def edit():
+def edit(expense_id):
 
-    # TODO
+    # Get all of the current user's expenses that can be edited
+    expenses = db.session.execute(db.select(Expenses).filter_by(user_id=session["user_id"]).order_by(Expenses.time.desc())).scalars().all()
+
+    expense = None
+    # Check if an expense id was given and matches any ids in the database, else return none
+    if expense_id is not None:
+        expense = next((e for e in expenses if e.id == expense_id), None)
+        if expense is None:
+            return "Expense not found", 404
+    
     if request.method == "POST":
-        render_template("edit.html")
+        amount = request.form.get("amount")
+        category = request.form.get("category")
+        desc = request.form.get("desc")
+        time = request.form.get("time")
+
+        # Check if any inputs were given
+        if not amount or not category or not desc or not time:
+            return "No inputs given.", 400
+
+        # Only round and validate the amount if it was given as an input
+        if amount:
+            try:
+                amount = round(float(amount), 2)
+            except ValueError:
+                return "Amount must be a number", 400
+
+            if amount <= 0:
+                return "Amount must be a positive number", 400
+
+        # Convert time into time in database, only if it was given as an input
+        if time:
+            try:
+                dbtime = datetime.strptime(time, "%Y-%m-%dT%H:%M").replace(tzinfo=timezone.utc)
+            except ValueError:
+                return "Invalid date/time", 400
+
+        # Update fields in database, if they were given as inputs
+        if amount:
+            expense.amount = amount
+        if category:
+            expense.category = category
+        if desc:
+            expense.desc = desc
+        if time:
+            expense.time = dbtime
+        db.session.commit()
+
+        return redirect("/")
 
     else:
-        return render_template("edit.html")
+        return render_template("edit.html", expenses=expenses, expense=expense, current_time=expense.time.strftime("%Y-%m-%dT%H:%M") if expense else None)
+
+@app.route("/remove", defaults={"expense_id": None})
+@app.route("/remove/<int:expense_id>", methods=["GET", "POST"])
+@login_required
+def remove(expense_id):
+    # Get all of the current users expenses from the database
+    expenses = db.session.execute(
+        db.select(Expenses)
+        .filter_by(user_id=session["user_id"])
+        .order_by(Expenses.time.desc())
+    ).scalars().all()
+
+    # Check if the expense exists for the current user
+    expense = None
+    if expense_id is not None:
+        expense = next((e for e in expenses if e.id == expense_id), None)
+        if expense is None:
+            return "Expense not found", 404
+
+    if request.method == "POST":
+        db.session.delete(expense)
+        db.session.commit()
+        return redirect("/")
+
+    return render_template("remove.html", expenses=expenses, expense=expense)
     
 @app.route("/credits")
 def credits():
 
     return render_template("credits.html")
-
-# To change the date and times to human readable time, with help of AI
-@app.template_filter("datetimefmt")
-def datetimefmt(value, fmt="%d %b %Y, %H:%M"):
-    if value is None:
-        return ""
-    return value.strftime(fmt)
-

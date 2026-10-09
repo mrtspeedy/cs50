@@ -1,5 +1,5 @@
 SQLAlchemy
 Flask-SQLAlchemy
 Flask
-Flask-Session
-pytz
+dotenv
+werkzeug

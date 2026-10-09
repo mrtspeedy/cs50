@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Edit
+{% endblock %}
+
+{% block main %}
+
+{% if expenses %}
+    <label for="picker">Expense:</label>
+    <!-- Check for changes in the select menu, and redirect to edit currently selected expense -->
+    <select class="mb-3" id="picker" onchange="if (this.value) window.location.href = this.value">
+        <option value="" {{ 'selected' if not expense }}>Select a transaction</option>
+        <!-- For every transaction that exists for the current user, create an option in the select menu -->
+        {% for e in expenses %}
+            <option value="{{ url_for('edit', expense_id=e.id) }}"
+                    {{ 'selected' if expense and expense.id == e.id }}>
+                {{ e.time | datetimefmt }} | {{ '%.2f' | format(e.amount) }} | {{ e.category }}
+            </option>
+        {% endfor %}
+    </select>
+{% else %}
+    <p>No expenses to edit! Maybe you were looking to <a href="/add">add one</a>?</p>
+{% endif %}
+
+{% if expense %}
+    <form action="{{ url_for('edit', expense_id=expense.id) }}" method="post">
+        <div class="mb-3">
+            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="amount" step="0.01" value="{{ expense.amount }}" type="text">
+        </div>
+        <div class="mb-3">
+            <input autocomplete="off" class="form-control mx-auto w-auto" name="category" value="{{ expense.category }}" type="text">
+        </div>
+        <div class="mb-3">
+            <input autocomplete="off" class="form-control mx-auto w-auto" name="desc" value="{{ expense.desc or '' }}" type="text">
+        </div>
+        <div class="mb-3">
+            <input autocomplete="off" class="form-control mx-auto w-auto" name="time" value="{{ current_time }}" type="datetime-local">
+        </div>
+        <button class="btn btn_primary" type="submit">Edit Expense</button>
+    </form>
+{% endif %}
+
+{% endblock %}

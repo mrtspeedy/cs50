@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Remove
+{% endblock %}
+
+{% block main %}
+    {% if expenses %}
+        <label for="picker">Expense:</label>
+        <!-- Check for changes in the select menu, and redirect to edit currently selected expense -->
+        <select class="mb-3" id="picker" onchange="if (this.value) window.location.href = this.value">
+            <option value="" {{ 'selected' if not expense }}>Select a transaction</option>
+            <!-- For every transaction that exists for the current user, create an option in the select menu -->
+            {% for e in expenses %}
+                <option value="{{ url_for('remove', expense_id=e.id) }}"
+                        {{ 'selected' if expense and expense.id == e.id }}>
+                    {{ e.time | datetimefmt }} | {{ '%.2f' | format(e.amount) }} | {{ e.category }}
+                </option>
+            {% endfor %}
+        </select>
+    {% else %}
+        <p>No expenses to remove! Maybe you were looking to <a href="/add">add one</a>?</p>
+    {% endif %}
+
+    {% if expense %}
+    <p>Are you sure you want to remove this transaction?</p>
+    <table class="table">
+        <tr><th>Amount</th><td>{{ '%.2f' | format(expense.amount) }}</td></tr>
+        <tr><th>Category</th><td>{{ expense.category }}</td></tr>
+        <tr><th>Description</th><td>{{ expense.desc or '' }}</td></tr>
+        <tr><th>Time (UTC)</th><td>{{ expense.time | datetimefmt }}</td></tr>
+    </table>
+
+    <form method="post">
+        <button type="submit" class="btn btn-danger">Remove</button>
+    </form>
+    {% endif %}
+
+{% endblock %}

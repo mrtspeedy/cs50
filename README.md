@@ -2,6 +2,10 @@
 
 #### Video Demo:
 
+#### Dependencies:
+
+
+
 #### Description:
 
 This is a budget and expense tracker made using Flask, Python, SQL, HTML, CSS, JS, and other libraries within those languages.

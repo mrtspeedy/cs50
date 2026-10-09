@@ -21,6 +21,8 @@
                 <th>Category</th>
                 <th>Description</th>
                 <th>Time (UTC)</th>
+                <th></th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -32,7 +34,11 @@
                         <td>{{ expense.category }}</td>
                         <td>{{ expense.desc }}</td>
                         <td>{{ expense.time | datetimefmt }}</td>
-                        <!-- TODO ALLOW EDIT FROM HERE -->
+                        <!-- Send to edit page of the expense -->
+                        <td>
+                            <a class="btn btn-primary btn-sm" href="{{ url_for('edit', expense_id=expense.id) }}">Edit</a>
+                            <a class="btn btn-primary btn-sm btn-danger" href="{{ url_for('remove', expense_id=expense.id) }}">Remove</a>
+                        </td>
                     </tr>
                 {% endfor %}
             {% endif %}
